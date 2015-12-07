@@ -1,0 +1,84 @@
+= CIP20150210 - PATTERN COMPREHENSION
+:numbered:
+:toc:
+:toc-placement: macro
+:source-highlighter: codemirror
+
+*Authors:* Tobias{nbsp}Lindkaaker{nbsp}<tobias@neotechnology.com>, Andrés{nbsp}Taylor{nbsp}<andres@neotechnology.com>
+
+[abstract]
+.Abstract
+Introduces new language features to facilitate aggregating values from patterns.
+
+toc::[]
+
+== Motivation
+When working with tree structured data, a common usage pattern is to extract values from some or all nodes in a subtree.
+Entities are uniquely identifiable nodes in the graph, which form the root of one or more acyclic subgraphs (e.g. trees).
+Said trees form a nice representation to store in the graph, but not to return from a query.
+When returning information from these trees, users will typically want to aggregate over the tree and not return the raw data.
+Today, this is not easy to do in Cypher. Users are trying to these results by using +OPTIONAL MATCH+ and +COLLECT+.
+An example of this can be seen here: https://github.com/neo4j/neo4j/issues/4402
+
+== Proposal
+This CIP introduces a new expression type - pattern comprehension, which allows for creating collections from patterns.
+
+=== Syntax
+[source, ebnf]
+----
+<pattern comprehension> ::= "[" <pattern> <ending> "]"
+<pattern> is described elsewhereq
+<ending> ::= <map> |
+             <map> <where>
+<map> ::= "|" <expression>
+<where> ::= "WHERE" <expression>
+----
+=== Examples
+
+Find all persons and return a list containing the names of their children.
+In this example, the variable +child+ is introduced in the scope of `<map>`, where it is used to extract the child's name into the produced list.
+[source, cypher]
+----
+MATCH (a:Person)
+RETURN [ (a)-[:PARENT_OF]->(child) | child.name ] as kids
+----
+
+Find all persons and return a collection containing a map with the names of their child, and the name of the co-parent for each child.
+This is just a larger example similar to the one above; It binds two different variables and uses both in the produced map.
+
+[source, cypher]
+----
+MATCH (a:Person)
+RETURN [ (a)-[:PARENT_OF]->(child)<-[:PARENT_OF]-(co_parent) |
+  {
+    child: child.name,
+    co_parent: co_parent.name
+} ] as kids
+----
+
+Find all persons and return a list containing the names of their children.
+In this example, the variable +child+ is introduced in the scope of `<map>`, where it is used to extract the child's name into the produced list.
+
+[source, cypher]
+----
+MATCH (a:Person)
+RETURN [ (a)-[:PARENT_OF]->(child) | child.name WHERE  ] as kids
+----
+
+
+=== Semantics
+Pattern-as-expressions normally yield a list of paths.
+By using pattern comprehension, instead of yielding paths, the user defines what should be returned in the `<map>` part of the expression.
+
+If `<where>` is specified, the predicate expression is evaluated for each matching path and only paths that produce true will be included in the result (note that this means that `false` and `null` will filter out paths).
+
+If a variable used in the `pattern` already exist in the outer scope of the pattern comprehension, they will be used as set points in the path searched for.
+On the other hand, when, a variable used does not already exists, it will be introduced in the scope of the `map` and `where` parts of the expressions, and will point to the corresponding graph elements when matched.
+
+== Benefits of this proposal
+This encodes a common solution into something supported natively by Cypher, which allows for more succinct queries and for better optimisations by planners.
+
+== Caveats to this proposal
+This adds an alternative to something that can already be achieved.
+
+== Appendix

@@ -22,7 +22,7 @@ This form is helpful, but not exhaustive in the types of subqueries that users w
 
 == Proposal
 
-To make this feature more powerful, add a new function named +EXISTS+, that would exist in two forms:
+To make this feature more powerful, add a new function named +EXISTS+ that would exist in two forms:
 
  * Property existence checking
  * Subquery existence checking
@@ -30,7 +30,7 @@ To make this feature more powerful, add a new function named +EXISTS+, that woul
 === Syntax
 
 ----
-expression = …
+expression = <current definition of expression>
            | property exists
            | subquery exists
            | simple subquery exists

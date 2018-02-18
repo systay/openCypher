@@ -306,23 +306,48 @@
     <seq><opt><non-terminal ref="ProcedureResultField"/> &SP; AS &SP;</opt> &var;</seq>
   </production>
 
-
-  <production name="With" scope:rule="new">
+  <production name="WithTable" scope:rule="new">
     <seq>
-      WITH
+      &WS; GRAPH
       <opt>&WS; DISTINCT</opt> &SP;
       <non-terminal ref="ReturnBody"/>
       <opt>&WS;<non-terminal ref="Where"/></opt>
     </seq>
   </production>
 
+  <production name="GraphConstruction" scope:rule="new">
+    <seq>
+      <opt>&WS; GRAPH</opt> &SP;
+      { &WS;
+        <non-terminal ref="UpdatingPart"/>
+      }
+    </seq>
+  </production>
+
+  <production name="With" scope:rule="new">
+    <seq>
+      WITH
+      <alt><non-terminal ref="WithTable"/></alt>
+      <alt><non-terminal ref="GraphConstruction"/></alt>
+    </seq>
+  </production>
+
   <production name="Return">
+    <seq>
+      RETURN
+      <alt><non-terminal ref="ReturnTable"/></alt>
+      <alt><non-terminal ref="GraphConstruction"/></alt>
+    </seq>
+  </production>
+
+  <production name="ReturnTable">
     <seq>
       RETURN
       <opt>&WS; DISTINCT</opt> &SP;
       <non-terminal ref="ReturnBody"/>
     </seq>
   </production>
+
 
   <production name="ReturnBody">
     <non-terminal ref="ReturnItems"/>
